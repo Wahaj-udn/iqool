@@ -29,12 +29,22 @@ class MainActivity : ComponentActivity() {
                     ) {
                         NavHost(navController = navController, startDestination = "chat") {
                             composable("chat") {
-                                BakingScreen(onNavigateToHealth = {
-                                    navController.navigate("health")
-                                })
+                                BakingScreen(
+                                    onNavigateToHealth = {
+                                        navController.navigate("health")
+                                    },
+                                    onNavigateToRun = {
+                                        navController.navigate("run")
+                                    }
+                                )
                             }
                             composable("health") {
                                 HealthConnectScreen(onBack = {
+                                    navController.popBackStack()
+                                })
+                            }
+                            composable("run") {
+                                RunScreen(onBack = {
                                     navController.popBackStack()
                                 })
                             }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,7 +60,8 @@ val imageDescriptions = arrayOf(
 @Composable
 fun BakingScreen(
     bakingViewModel: BakingViewModel = viewModel(),
-    onNavigateToHealth: () -> Unit
+    onNavigateToHealth: () -> Unit,
+    onNavigateToRun: () -> Unit
 ) {
     var selectedImage by remember { mutableStateOf<Int?>(null) }
     var prompt by rememberSaveable { mutableStateOf("") }
@@ -77,11 +79,22 @@ fun BakingScreen(
                 modifier = Modifier.padding(16.dp)
             )
 
-            Button(
-                onClick = onNavigateToHealth,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Go to Health Connect")
+                Button(
+                    onClick = onNavigateToHealth,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Health")
+                }
+                Button(
+                    onClick = onNavigateToRun,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Run")
+                }
             }
 
             LazyRow(
@@ -194,5 +207,5 @@ fun ChatBubble(text: String, isUser: Boolean) {
 @Preview(showSystemUi = true)
 @Composable
 fun BakingScreenPreview() {
-    BakingScreen(onNavigateToHealth = {})
+    BakingScreen(onNavigateToHealth = {}, onNavigateToRun = {})
 }
