@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.google.ai.client)
+    implementation(libs.play.services.location)
     implementation(libs.maplibre.android.sdk)
     implementation("androidx.health.connect:connect-client:1.1.0")
     testImplementation(libs.junit)

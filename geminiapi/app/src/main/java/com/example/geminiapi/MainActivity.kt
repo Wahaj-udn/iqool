@@ -13,10 +13,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.geminiapi.ui.theme.GeminiapiTheme
+import org.maplibre.android.MapLibre
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize MapLibre globally
+        try {
+            MapLibre.getInstance(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         setContent {
             GeminiapiTheme {
                 val navController = rememberNavController()
