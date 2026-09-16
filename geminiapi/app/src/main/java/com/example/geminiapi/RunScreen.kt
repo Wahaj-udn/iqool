@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -25,7 +26,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.json.JSONObject
-import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
@@ -35,10 +35,19 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.offline.*
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 import java.util.Locale
 
 private const val STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
 private const val REGION_NAME = "Hyderabad_Street_Offline_Final"
+private const val PATH_SOURCE_ID = "run-path-source"
+private const val PATH_LAYER_ID = "run-path-layer"
 
 @Composable
 fun RunScreen(
@@ -56,7 +65,7 @@ fun RunScreen(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            locationViewModel.startLocationUpdates()
+            locationViewModel.startRunning()
         }
     }
 
@@ -68,7 +77,6 @@ fun RunScreen(
     LaunchedEffect(Unit) {
         try {
             addLog("Checking Storage...")
-            MapLibre.getInstance(context)
             val offlineManager = OfflineManager.getInstance(context)
             
             offlineManager.listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
@@ -80,7 +88,7 @@ fun RunScreen(
                         region.getStatus(object : OfflineRegion.OfflineRegionStatusCallback {
                             override fun onStatus(status: OfflineRegionStatus?) {
                                 if (status?.isComplete == true) {
-                                    addLog("Offline data ready.")
+                                    addLog("Offline data ready and done for..")
                                     isDownloaded = true
                                 } else {
                                     addLog("Resuming setup...")
@@ -114,12 +122,12 @@ fun RunScreen(
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
-                Text("Run Feature", style = MaterialTheme.typography.titleMedium)
+                Text("Run Recording", style = MaterialTheme.typography.titleMedium)
                 
                 Button(
                     onClick = {
                         if (locationState.isTracking) {
-                            locationViewModel.stopLocationUpdates()
+                            locationViewModel.stopRunning()
                         } else {
                             permissionLauncher.launch(
                                 arrayOf(
@@ -133,7 +141,7 @@ fun RunScreen(
                         containerColor = if (locationState.isTracking) Color.Red else MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text(if (locationState.isTracking) "Stop GPS" else "Start GPS")
+                    Text(if (locationState.isTracking) "Stop Running" else "Start Running")
                 }
             }
 
@@ -165,7 +173,10 @@ fun RunScreen(
                         LinearProgressIndicator(progress = { downloadProgress }, modifier = Modifier.padding(16.dp))
                     }
                 } else {
-                    MapViewContainer(locationState = locationState, onLog = { addLog(it) })
+                    MapViewContainer(
+                        locationState = locationState,
+                        onLog = { addLog(it) }
+                    )
                 }
                 
                 locationState.location?.let {
@@ -177,12 +188,13 @@ fun RunScreen(
                             Text("Lat: ${String.format(Locale.US, "%.5f", it.latitude)}", color = Color.White)
                             Text("Lon: ${String.format(Locale.US, "%.5f", it.longitude)}", color = Color.White)
                             Text("Acc: ${it.accuracy.toInt()}m", color = Color.White)
+                            Text("Points: ${locationState.pathPoints.size}", color = Color.Cyan)
                         }
                     }
                 }
 
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(100.dp).align(Alignment.BottomCenter)
+                    modifier = Modifier.fillMaxWidth().height(80.dp).align(Alignment.BottomCenter)
                         .background(Color.Black.copy(alpha = 0.6f)).padding(4.dp)
                 ) {
                     LazyColumn { items(logs) { Text(it, color = Color.Green, style = MaterialTheme.typography.bodySmall) } }
@@ -198,6 +210,7 @@ fun MapViewContainer(locationState: LocationState, onLog: (String) -> Unit) {
     val context = LocalContext.current
     val mapView = remember { MapView(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
+    var hasInitialZoomed by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -217,17 +230,46 @@ fun MapViewContainer(locationState: LocationState, onLog: (String) -> Unit) {
 
     AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize()) { view ->
         view.getMapAsync { map ->
-            onLog("Engine Ready.")
-            map.setStyle(STYLE_URL) { style ->
-                onLog("Style Set.")
-                try {
-                    val locationComponent = map.locationComponent
-                    locationComponent.activateLocationComponent(LocationComponentActivationOptions.builder(context, style).build())
-                    locationComponent.isLocationComponentEnabled = true
-                    locationComponent.renderMode = RenderMode.COMPASS
-                    locationComponent.cameraMode = CameraMode.TRACKING
-                    onLog("GPS Enabled.")
-                } catch (e: Exception) { onLog("GPS ERR: ${e.localizedMessage}") }
+            if (map.style == null) {
+                map.setStyle(STYLE_URL) { style ->
+                    try {
+                        val locationComponent = map.locationComponent
+                        locationComponent.activateLocationComponent(
+                            LocationComponentActivationOptions.builder(context, style).build()
+                        )
+                        locationComponent.isLocationComponentEnabled = true
+                        locationComponent.renderMode = RenderMode.COMPASS
+                        locationComponent.cameraMode = CameraMode.TRACKING
+                        
+                        // Setup Path Layer
+                        val source = GeoJsonSource(PATH_SOURCE_ID)
+                        style.addSource(source)
+                        
+                        val layer = LineLayer(PATH_LAYER_ID, PATH_SOURCE_ID)
+                        layer.setProperties(
+                            PropertyFactory.lineColor(Color.Blue.toArgb()),
+                            PropertyFactory.lineWidth(6f),
+                            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+                            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
+                        )
+                        style.addLayer(layer)
+                        
+                        onLog("Map Engine Ready.")
+                    } catch (e: Exception) { onLog("Setup Err: ${e.localizedMessage}") }
+                }
+            }
+        }
+    }
+
+    // Dynamic path update
+    LaunchedEffect(locationState.pathPoints) {
+        if (locationState.pathPoints.size >= 2) {
+            mapView.getMapAsync { map ->
+                map.style?.let { style ->
+                    val source = style.getSourceAs<GeoJsonSource>(PATH_SOURCE_ID)
+                    val points = locationState.pathPoints.map { Point.fromLngLat(it.longitude, it.latitude) }
+                    source?.setGeoJson(Feature.fromGeometry(LineString.fromLngLats(points)))
+                }
             }
         }
     }
@@ -235,7 +277,12 @@ fun MapViewContainer(locationState: LocationState, onLog: (String) -> Unit) {
     LaunchedEffect(locationState.location) {
         locationState.location?.let { loc ->
             mapView.getMapAsync { map ->
-                map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(loc.latitude, loc.longitude)))
+                if (!hasInitialZoomed) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(loc.latitude, loc.longitude), 17.0))
+                    hasInitialZoomed = true
+                } else {
+                    map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(loc.latitude, loc.longitude)))
+                }
             }
         }
     }

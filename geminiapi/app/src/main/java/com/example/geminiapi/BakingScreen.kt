@@ -61,7 +61,8 @@ val imageDescriptions = arrayOf(
 fun BakingScreen(
     bakingViewModel: BakingViewModel = viewModel(),
     onNavigateToHealth: () -> Unit,
-    onNavigateToRun: () -> Unit
+    onNavigateToRun: () -> Unit,
+    onNavigateToExercise: () -> Unit
 ) {
     var selectedImage by remember { mutableStateOf<Int?>(null) }
     var prompt by rememberSaveable { mutableStateOf("") }
@@ -94,6 +95,12 @@ fun BakingScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Run")
+                }
+                Button(
+                    onClick = onNavigateToExercise,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Exercise")
                 }
             }
 
@@ -207,5 +214,5 @@ fun ChatBubble(text: String, isUser: Boolean) {
 @Preview(showSystemUi = true)
 @Composable
 fun BakingScreenPreview() {
-    BakingScreen(onNavigateToHealth = {}, onNavigateToRun = {})
+    BakingScreen(onNavigateToHealth = {}, onNavigateToRun = {}, onNavigateToExercise = {})
 }

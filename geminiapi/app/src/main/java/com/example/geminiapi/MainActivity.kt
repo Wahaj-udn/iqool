@@ -44,6 +44,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onNavigateToRun = {
                                         navController.navigate("run")
+                                    },
+                                    onNavigateToExercise = {
+                                        navController.navigate("exercise")
                                     }
                                 )
                             }
@@ -54,6 +57,11 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("run") {
                                 RunScreen(onBack = {
+                                    navController.popBackStack()
+                                })
+                            }
+                            composable("exercise") {
+                                ExerciseAssistScreen(onBack = {
                                     navController.popBackStack()
                                 })
                             }
