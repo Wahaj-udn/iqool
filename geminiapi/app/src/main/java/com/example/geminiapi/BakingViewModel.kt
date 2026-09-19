@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.geminiapi.analysis.ModelResult
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.content
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class BakingViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState: MutableStateFlow<UiState> =
@@ -19,14 +21,13 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
     val uiState: StateFlow<UiState> =
         _uiState.asStateFlow()
 
-    // TODO: Add your API key here. Get one at https://aistudio.google.com/
     private val apiKey = "AQ.Ab8RN6Ld_6i_JZDi1AAYW5B6dRUv6aKA5jJhKVU3DGg4_edZVw"
 
     private val generativeModel = GenerativeModel(
         modelName = "gemini-3.6-flash",
         apiKey = apiKey,
         systemInstruction = content {
-            text("You are a helpful health and fitness assistant. Use the provided health data context to give personalized advice and answer questions accurately.")
+            text("You are a helpful health and fitness AI coach. Use the provided user profile, vitals, and risk assessment results to give personalized advice. Always emphasize that you are an AI and not a doctor.")
         }
     )
 
@@ -45,22 +46,43 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
                 val isFirstMessage = chat.history.isEmpty()
                 
                 val finalPrompt = if (isFirstMessage) {
-                    val healthContext = healthDataManager.fetchLast15DaysSummary()
-                    "$healthContext\n\nUser Question: $prompt"
+                    val healthConnectSummary = healthDataManager.fetchLast15DaysSummary()
+                    val profile = HealthFeatureStore.profile.value
+                    val results = HealthFeatureStore.lastResults.value
+                    
+                    val contextBuilder = StringBuilder()
+                    contextBuilder.append("--- USER HEALTH CONTEXT ---\n")
+                    contextBuilder.append("PROFILE:\n")
+                    contextBuilder.append("Age: ${profile.age}, Gender: ${profile.gender}, Height: ${profile.height}cm, Weight: ${profile.weight}kg, BMI: ${String.format(Locale.US, "%.1f", profile.bmi)}\n")
+                    contextBuilder.append("\nVITALS & LABS:\n")
+                    contextBuilder.append("BP: ${profile.systolic}/${profile.diastolic}, Glucose: ${profile.glucose}, Cholesterol: ${profile.cholesterol}, HR: ${profile.restingHr}\n")
+                    contextBuilder.append("LDL: ${profile.ldl}, HDL: ${profile.hdl}, Triglycerides: ${profile.triglycerides}, Insulin: ${profile.insulin}\n")
+                    contextBuilder.append("\nLIFESTYLE:\n")
+                    contextBuilder.append("Smoking: ${profile.smoking}, Activity: ${profile.activity}, Alcohol: ${profile.alcohol}, Sleep: ${profile.sleep}h, Stress: ${profile.stress}\n")
+                    
+                    if (results != null) {
+                        contextBuilder.append("\n--- ONNX AI RISK ASSESSMENT RESULTS ---\n")
+                        contextBuilder.append("Diabetes: ${results.diabetes?.label} (Certainty: ${String.format(Locale.US, "%.1f", results.diabetes?.confidence)}%)\n")
+                        contextBuilder.append("Heart Health: ${results.heart?.label} (Certainty: ${String.format(Locale.US, "%.1f", results.heart?.confidence)}%)\n")
+                        contextBuilder.append("Hypertension: ${results.hypertension?.label} (Certainty: ${String.format(Locale.US, "%.1f", results.hypertension?.confidence)}%)\n")
+                        contextBuilder.append("Obesity: ${results.obesity?.label} (Certainty: ${String.format(Locale.US, "%.1f", results.obesity?.confidence)}%)\n")
+                    }
+                    
+                    contextBuilder.append("\n--- HEALTH CONNECT DATA (PAST 15 DAYS) ---\n")
+                    contextBuilder.append(healthConnectSummary)
+                    contextBuilder.append("\n--- END OF CONTEXT ---\n")
+                    
+                    contextBuilder.append("\nUser Question: $prompt")
+                    contextBuilder.toString()
                 } else {
                     prompt
                 }
 
-                // Construct the content to send
                 val userContent = content {
-                    if (bitmap != null) {
-                        image(bitmap)
-                    }
+                    if (bitmap != null) image(bitmap)
                     text(finalPrompt)
                 }
 
-                // For the UI, we only want to show the original prompt if it was the first message
-                // to avoid cluttering with the background health data.
                 val uiUserContent = if (isFirstMessage) {
                     content { 
                         if (bitmap != null) image(bitmap)
@@ -70,16 +92,9 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
                     userContent
                 }
 
-                // Optimistically update UI history with the clean prompt
                 _chatHistory.value = _chatHistory.value + uiUserContent
-
-                // Send the message to the model (with health context if first)
                 chat.sendMessage(userContent)
                 
-                // Refresh history from the chat session
-                // We need to map the first message back to the clean version in our local state
-                // OR we can just keep managing our own _chatHistory if we want absolute control.
-                // Given the requirement, let's keep it simple: replace the long prompt in history with the short one.
                 val officialHistory = chat.history.toMutableList()
                 if (isFirstMessage && officialHistory.isNotEmpty()) {
                     officialHistory[0] = uiUserContent
@@ -89,7 +104,6 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
                 _uiState.value = UiState.Success("")
             } catch (e: Exception) {
                 _uiState.value = UiState.Error(e.localizedMessage ?: "Unknown error")
-                _chatHistory.value = _chatHistory.value // trigger update or cleanup
             }
         }
     }

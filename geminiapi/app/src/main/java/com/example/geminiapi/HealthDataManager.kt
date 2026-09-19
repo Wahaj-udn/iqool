@@ -1,6 +1,7 @@
 package com.example.geminiapi
 
 import android.content.Context
+import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.permission.HealthPermission
@@ -118,5 +119,31 @@ class HealthDataManager(private val context: Context) {
         }
 
         return sb.toString()
+    }
+
+    suspend fun getLatestHeightAndWeight(): Pair<Float?, Float?> {
+        val client = healthConnectClient ?: return null to null
+        val granted = client.permissionController.getGrantedPermissions()
+        val start = Instant.now().minus(30, ChronoUnit.DAYS)
+        val end = Instant.now()
+
+        var height: Float? = null
+        var weight: Float? = null
+
+        try {
+            if (granted.contains(HealthPermission.getReadPermission(HeightRecord::class))) {
+                height = client.readRecords(
+                    ReadRecordsRequest(HeightRecord::class, TimeRangeFilter.between(start, end), ascendingOrder = false, pageSize = 1)
+                ).records.firstOrNull()?.height?.inMeters?.toFloat()
+            }
+            if (granted.contains(HealthPermission.getReadPermission(WeightRecord::class))) {
+                weight = client.readRecords(
+                    ReadRecordsRequest(WeightRecord::class, TimeRangeFilter.between(start, end), ascendingOrder = false, pageSize = 1)
+                ).records.firstOrNull()?.weight?.inKilograms?.toFloat()
+            }
+        } catch (e: Exception) {
+            Log.e("HealthDataManager", "Error: ${e.message}")
+        }
+        return height to weight
     }
 }

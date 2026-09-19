@@ -62,7 +62,8 @@ fun BakingScreen(
     bakingViewModel: BakingViewModel = viewModel(),
     onNavigateToHealth: () -> Unit,
     onNavigateToRun: () -> Unit,
-    onNavigateToExercise: () -> Unit
+    onNavigateToExercise: () -> Unit,
+    onNavigateToAssessment: () -> Unit
 ) {
     var selectedImage by remember { mutableStateOf<Int?>(null) }
     var prompt by rememberSaveable { mutableStateOf("") }
@@ -96,11 +97,22 @@ fun BakingScreen(
                 ) {
                     Text("Run")
                 }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Button(
                     onClick = onNavigateToExercise,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Exercise")
+                }
+                Button(
+                    onClick = onNavigateToAssessment,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Assessment")
                 }
             }
 
@@ -214,5 +226,5 @@ fun ChatBubble(text: String, isUser: Boolean) {
 @Preview(showSystemUi = true)
 @Composable
 fun BakingScreenPreview() {
-    BakingScreen(onNavigateToHealth = {}, onNavigateToRun = {}, onNavigateToExercise = {})
+    BakingScreen(onNavigateToHealth = {}, onNavigateToRun = {}, onNavigateToExercise = {}, onNavigateToAssessment = {})
 }

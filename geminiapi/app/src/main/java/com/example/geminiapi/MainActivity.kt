@@ -47,6 +47,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onNavigateToExercise = {
                                         navController.navigate("exercise")
+                                    },
+                                    onNavigateToAssessment = {
+                                        navController.navigate("assessment")
                                     }
                                 )
                             }
@@ -64,6 +67,36 @@ class MainActivity : ComponentActivity() {
                                 ExerciseAssistScreen(onBack = {
                                     navController.popBackStack()
                                 })
+                            }
+                            composable("diabetes") {
+                                DiabetesScreen(onBack = {
+                                    navController.popBackStack()
+                                })
+                            }
+                            composable("obesity") {
+                                ObesityScreen(onBack = {
+                                    navController.popBackStack()
+                                })
+                            }
+                            composable("heart") {
+                                HeartScreen(onBack = {
+                                    navController.popBackStack()
+                                })
+                            }
+                            composable("hypertension") {
+                                HypertensionScreen(onBack = {
+                                    navController.popBackStack()
+                                })
+                            }
+                            composable("assessment") {
+                                HealthAssessmentScreen(
+                                    onBack = {
+                                        navController.popBackStack()
+                                    },
+                                    onNavigateToChat = {
+                                        navController.navigate("chat")
+                                    }
+                                )
                             }
                         }
                     }

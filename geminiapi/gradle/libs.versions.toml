@@ -16,6 +16,7 @@ maplibre = "13.6.1"
 playServicesLocation = "21.4.0"
 camerax = "1.4.1"
 mediapipe = "0.10.14"
+onnxruntime = "1.30.0"
 googleGmsGoogleServices = "4.4.4"
 
 [libraries]
@@ -45,6 +46,7 @@ androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", 
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 mediapipe-tasks-vision = { group = "com.google.mediapipe", name = "tasks-vision", version.ref = "mediapipe" }
+onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

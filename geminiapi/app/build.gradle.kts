@@ -69,6 +69,9 @@ dependencies {
     // MediaPipe
     implementation(libs.mediapipe.tasks.vision)
 
+    // ONNX Runtime
+    implementation(libs.onnxruntime.android)
+
     implementation("androidx.health.connect:connect-client:1.1.0")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
