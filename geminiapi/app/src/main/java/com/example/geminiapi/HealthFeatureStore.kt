@@ -13,6 +13,10 @@ object HealthFeatureStore {
     private val _lastResults = MutableStateFlow<AssessmentResults?>(null)
     val lastResults: StateFlow<AssessmentResults?> = _lastResults.asStateFlow()
 
+    fun init(p: UnifiedHealthProfile) {
+        _profile.value = p
+    }
+
     fun update(update: (UnifiedHealthProfile) -> UnifiedHealthProfile) {
         val newProfile = update(_profile.value)
         val heightM = newProfile.height / 100f

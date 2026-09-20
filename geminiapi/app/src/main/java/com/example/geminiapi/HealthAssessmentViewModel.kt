@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class HealthAssessmentViewModel(application: Application) : AndroidViewModel(application) {
+    private val prefManager = PreferenceManager(application)
     private val _results = MutableStateFlow(AssessmentResults())
     val results: StateFlow<AssessmentResults> = _results.asStateFlow()
 
@@ -48,6 +49,8 @@ class HealthAssessmentViewModel(application: Application) : AndroidViewModel(app
             _results.value = finalResults
             // Save to store for Gemini context
             HealthFeatureStore.setResults(finalResults)
+            // Persist the profile data entered in this screen
+            prefManager.saveFullProfile(p)
         }
     }
 

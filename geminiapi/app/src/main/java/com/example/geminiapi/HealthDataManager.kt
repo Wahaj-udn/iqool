@@ -12,6 +12,7 @@ import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateGroupByDurationRequest
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Duration
@@ -29,7 +30,7 @@ class HealthDataManager(private val context: Context) {
         } else null
     }
 
-    private val permissions = setOf(
+    val permissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(DistanceRecord::class),
@@ -145,5 +146,55 @@ class HealthDataManager(private val context: Context) {
             Log.e("HealthDataManager", "Error: ${e.message}")
         }
         return height to weight
+    }
+
+    suspend fun getTodayStats(): Map<String, Any?> {
+        return getStatsForDay(Instant.now())
+    }
+
+    suspend fun getStatsForDay(time: Instant): Map<String, Any?> {
+        val client = healthConnectClient ?: return emptyMap()
+        val granted = client.permissionController.getGrantedPermissions()
+        
+        val zoneId = ZoneId.systemDefault()
+        val startOfDay = time.atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant()
+        val endOfDay = startOfDay.plus(1, ChronoUnit.DAYS)
+        
+        val stats = mutableMapOf<String, Any?>()
+        
+        try {
+            if (granted.contains(HealthPermission.getReadPermission(StepsRecord::class))) {
+                val response = client.aggregate(
+                    AggregateRequest(
+                        metrics = setOf(StepsRecord.COUNT_TOTAL),
+                        timeRangeFilter = TimeRangeFilter.between(startOfDay, endOfDay)
+                    )
+                )
+                stats["steps"] = response[StepsRecord.COUNT_TOTAL]
+            }
+            
+            if (granted.contains(androidx.health.connect.client.permission.HealthPermission.getReadPermission(HeartRateRecord::class))) {
+                val response = client.aggregate(
+                    AggregateRequest(
+                        metrics = setOf(HeartRateRecord.BPM_AVG),
+                        timeRangeFilter = TimeRangeFilter.between(startOfDay, endOfDay)
+                    )
+                )
+                stats["hr"] = response[HeartRateRecord.BPM_AVG]
+            }
+
+            if (granted.contains(androidx.health.connect.client.permission.HealthPermission.getReadPermission(SleepSessionRecord::class))) {
+                val response = client.aggregate(
+                    AggregateRequest(
+                        metrics = setOf(SleepSessionRecord.SLEEP_DURATION_TOTAL),
+                        timeRangeFilter = TimeRangeFilter.between(startOfDay.minus(12, ChronoUnit.HOURS), endOfDay)
+                    )
+                )
+                stats["sleep"] = response[SleepSessionRecord.SLEEP_DURATION_TOTAL]
+            }
+        } catch (e: Exception) {
+            Log.e("HealthDataManager", "Stats error: ${e.message}")
+        }
+        return stats
     }
 }

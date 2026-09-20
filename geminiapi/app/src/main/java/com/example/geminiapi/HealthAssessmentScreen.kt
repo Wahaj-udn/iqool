@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.geminiapi.analysis.ModelResult
+import com.example.geminiapi.ui.components.*
+import com.example.geminiapi.ui.theme.*
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -135,54 +137,6 @@ fun HealthAssessmentScreen(
             }
 
             Spacer(modifier = Modifier.height(40.dp))
-        }
-    }
-}
-
-@Composable
-fun AssessmentSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-            content()
-        }
-    }
-}
-
-@Composable
-fun AssessmentSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float = 1f, onValueChange: (Float) -> Unit) {
-    Column {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, style = MaterialTheme.typography.bodySmall)
-            Text(if (step >= 1f) value.toInt().toString() else String.format(Locale.US, "%.1f", value), fontWeight = FontWeight.Bold)
-        }
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = range,
-            steps = if (step >= 1f) (range.endInclusive - range.start).toInt() - 1 else 0
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AssessmentDropdown(label: String, current: String, options: List<String>, onSelect: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            value = current.uppercase(),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth(),
-            textStyle = MaterialTheme.typography.bodyMedium
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
-                DropdownMenuItem(text = { Text(option.uppercase()) }, onClick = { onSelect(option); expanded = false })
-            }
         }
     }
 }
