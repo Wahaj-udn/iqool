@@ -63,7 +63,8 @@ fun BakingScreen(
     onNavigateToHealth: () -> Unit,
     onNavigateToRun: () -> Unit,
     onNavigateToExercise: () -> Unit,
-    onNavigateToAssessment: () -> Unit
+    onNavigateToAssessment: () -> Unit,
+    onNavigateToLocalChat: () -> Unit
 ) {
     var selectedImage by remember { mutableStateOf<Int?>(null) }
     var prompt by rememberSaveable { mutableStateOf("") }
@@ -113,6 +114,16 @@ fun BakingScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Assessment")
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Button(
+                    onClick = onNavigateToLocalChat,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("🤖 LOCAL QWEN (OFFLINE)")
                 }
             }
 
@@ -226,5 +237,5 @@ fun ChatBubble(text: String, isUser: Boolean) {
 @Preview(showSystemUi = true)
 @Composable
 fun BakingScreenPreview() {
-    BakingScreen(onNavigateToHealth = {}, onNavigateToRun = {}, onNavigateToExercise = {}, onNavigateToAssessment = {})
+    BakingScreen(onNavigateToHealth = {}, onNavigateToRun = {}, onNavigateToExercise = {}, onNavigateToAssessment = {}, onNavigateToLocalChat = {})
 }

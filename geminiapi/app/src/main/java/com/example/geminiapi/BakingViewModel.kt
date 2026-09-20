@@ -23,13 +23,17 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
 
     private val apiKey = "AQ.Ab8RN6Ld_6i_JZDi1AAYW5B6dRUv6aKA5jJhKVU3DGg4_edZVw"
 
-    private val generativeModel = GenerativeModel(
-        modelName = "gemini-3.6-flash",
-        apiKey = apiKey,
-        systemInstruction = content {
-            text("You are a helpful health and fitness AI coach. Use the provided user profile, vitals, and risk assessment results to give personalized advice. Always emphasize that you are an AI and not a doctor.")
-        }
-    )
+    private val generativeModel = try {
+        GenerativeModel(
+            modelName = "gemini-3.6-flash",
+            apiKey = apiKey,
+            systemInstruction = content {
+                text("You are a helpful health and fitness AI coach. Use the provided user profile, vitals, and risk assessment results to give personalized advice. Always emphasize that you are an AI and not a doctor.")
+            }
+        )
+    } catch (e: Exception) {
+        GenerativeModel(modelName = "gemini-1.5-flash", apiKey = apiKey)
+    }
 
     private val chat = generativeModel.startChat()
     

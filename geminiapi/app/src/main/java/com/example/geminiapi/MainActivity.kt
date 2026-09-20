@@ -1,5 +1,6 @@
 package com.example.geminiapi
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,16 +15,27 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.geminiapi.ui.theme.GeminiapiTheme
 import org.maplibre.android.MapLibre
+import com.example.geminiapi.llama.LocalLlamaScreen
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate started")
         
-        // Initialize MapLibre globally
-        try {
-            MapLibre.getInstance(this)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        // Disable MapLibre on emulators if causing black screen
+        val isEmulator = Build.PRODUCT.contains("sdk") ||
+                         Build.MODEL.contains("Emulator")
+        
+        if (!isEmulator) {
+            try {
+                MapLibre.getInstance(this)
+                Log.d("MainActivity", "MapLibre initialized")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "MapLibre init failed: ${e.message}")
+            }
+        } else {
+            Log.d("MainActivity", "Skipping MapLibre on emulator to avoid rendering bugs")
         }
 
         setContent {
@@ -50,6 +62,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onNavigateToAssessment = {
                                         navController.navigate("assessment")
+                                    },
+                                    onNavigateToLocalChat = {
+                                        navController.navigate("local_chat")
                                     }
                                 )
                             }
@@ -97,6 +112,11 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("chat")
                                     }
                                 )
+                            }
+                            composable("local_chat") {
+                                LocalLlamaScreen(onBack = {
+                                    navController.popBackStack()
+                                })
                             }
                         }
                     }
