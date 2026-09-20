@@ -13,6 +13,7 @@ import java.io.File
 data class LlamaUiState(
     val isLoaded: Boolean = false,
     val isLoading: Boolean = false,
+    val isGenerating: Boolean = false,
     val response: String = "",
     val error: String? = null
 )
@@ -47,12 +48,20 @@ class LocalLlamaViewModel : ViewModel() {
     }
 
     fun sendPrompt(prompt: String) {
-        if (!_uiState.value.isLoaded) return
+        if (!_uiState.value.isLoaded || _uiState.value.isGenerating) return
+        
+        _uiState.value = _uiState.value.copy(isGenerating = true, response = "", error = null)
         
         viewModelScope.launch(Dispatchers.IO) {
-            val result = engine.completion(prompt)
-            withContext(Dispatchers.Main) {
-                _uiState.value = _uiState.value.copy(response = result)
+            try {
+                val result = engine.completion(prompt)
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(response = result, isGenerating = false)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(error = e.message, isGenerating = false)
+                }
             }
         }
     }
