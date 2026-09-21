@@ -24,6 +24,9 @@ class HealthAssessmentViewModel(application: Application) : AndroidViewModel(app
 
     fun runAllPredictions() {
         val p = HealthFeatureStore.profile.value
+        // Persist the current state of the profile
+        prefManager.saveFullProfile(p)
+        
         viewModelScope.launch {
             _results.value = _results.value.copy(isCalculating = true)
             

@@ -32,7 +32,8 @@ Java_com_example_geminiapi_llama_LlamaEngine_loadModel(JNIEnv *env, jobject thiz
 
     auto cparams = llama_context_default_params();
     cparams.n_ctx = 2048;
-    cparams.n_threads = 4;
+    cparams.n_threads = 8;
+    cparams.n_batch = 512;
 
     ctx = llama_init_from_model(model, cparams);
     if (!ctx) {
@@ -46,10 +47,10 @@ Java_com_example_geminiapi_llama_LlamaEngine_loadModel(JNIEnv *env, jobject thiz
     smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
     llama_sampler_chain_add(smpl, llama_sampler_init_top_k(40));
     llama_sampler_chain_add(smpl, llama_sampler_init_top_p(0.95f, 1));
-    llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.8f));
+    llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.7f));
     llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 
-    LOGD("Model loaded successfully. Context: 2048, Threads: 4");
+    LOGD("Model and Sampler initialized.");
     env->ReleaseStringUTFChars(model_path, path);
     return JNI_TRUE;
 }
@@ -61,32 +62,35 @@ Java_com_example_geminiapi_llama_LlamaEngine_unloadModel(JNIEnv *env, jobject th
     if (ctx) { llama_free(ctx); ctx = nullptr; }
     if (model) { llama_model_free(model); model = nullptr; }
     llama_backend_free();
-    LOGD("Resources unloaded");
+    LOGD("Engine stopped.");
 }
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_com_example_geminiapi_llama_LlamaEngine_doCompletion(JNIEnv *env, jobject thiz, jstring prompt) {
+Java_com_example_geminiapi_llama_LlamaEngine_doCompletion(JNIEnv *env, jobject thiz, jstring prompt, jobject callback) {
     if (!ctx || !model) return env->NewStringUTF("Error: Engine not ready");
 
-    // Clear previous memory context
+    // Clear context for fresh generation
     llama_memory_t mem = llama_get_memory(ctx);
-    llama_memory_clear(mem, true);
+    llama_memory_seq_rm(mem, 0, -1, -1);
 
-    const char *prompt_str = env->GetStringUTFChars(prompt, nullptr);
+    const char *user_prompt = env->GetStringUTFChars(prompt, nullptr);
     const struct llama_vocab * vocab = llama_model_get_vocab(model);
 
-    // 1. Tokenization
+    // Qwen Chat Template
+    std::string formatted_prompt = "<|im_start|>system\nYou are a helpful health and fitness AI coach.<|im_end|>\n"
+                                   "<|im_start|>user\n";
+    formatted_prompt += user_prompt;
+    formatted_prompt += "<|im_end|>\n<|im_start|>assistant\n";
+
+    // 1. Tokenize
     std::vector<llama_token> tokens;
     tokens.push_back(llama_vocab_bos(vocab));
-    int n_tokens = -llama_tokenize(vocab, prompt_str, (int32_t)strlen(prompt_str), nullptr, 0, false, true);
+    int n_tokens = -llama_tokenize(vocab, formatted_prompt.c_str(), (int)formatted_prompt.length(), nullptr, 0, false, true);
     tokens.resize(n_tokens + 1);
-    llama_tokenize(vocab, prompt_str, (int32_t)strlen(prompt_str), tokens.data() + 1, (int32_t)tokens.size() - 1, false, true);
+    llama_tokenize(vocab, formatted_prompt.c_str(), (int)formatted_prompt.length(), tokens.data() + 1, (int)tokens.size() - 1, false, true);
 
-    LOGD("Prompt: %d tokens", (int)tokens.size());
-    auto t_start = std::chrono::high_resolution_clock::now();
-
-    // 2. Process prompt
+    // 2. Setup Batch
     llama_batch batch = llama_batch_init(tokens.size(), 0, 1);
     for (size_t i = 0; i < tokens.size(); ++i) {
         batch.token[i] = tokens[i];
@@ -99,14 +103,17 @@ Java_com_example_geminiapi_llama_LlamaEngine_doCompletion(JNIEnv *env, jobject t
 
     if (llama_decode(ctx, batch) != 0) {
         llama_batch_free(batch);
-        env->ReleaseStringUTFChars(prompt, prompt_str);
-        return env->NewStringUTF("Error: Initial decode failed");
+        env->ReleaseStringUTFChars(prompt, user_prompt);
+        return env->NewStringUTF("Error: Decode failed");
     }
 
-    // 3. Generation loop
-    std::string result_text;
-    int max_tokens = 60;
-    int count = 0;
+    // 3. Callback setup
+    jclass callback_class = env->GetObjectClass(callback);
+    jmethodID invoke_method = env->GetMethodID(callback_class, "invoke", "(Ljava/lang/Object;)Ljava/lang/Object;");
+
+    // 4. Generation Loop with Streaming
+    std::string full_response;
+    int max_tokens = 256;
 
     for (int i = 0; i < max_tokens; ++i) {
         llama_token next = llama_sampler_sample(smpl, ctx, -1);
@@ -115,8 +122,14 @@ Java_com_example_geminiapi_llama_LlamaEngine_doCompletion(JNIEnv *env, jobject t
         char buf[256];
         int n = llama_token_to_piece(vocab, next, buf, sizeof(buf), 0, false);
         if (n < 0) break;
-        result_text.append(buf, n);
-        count++;
+
+        std::string piece(buf, n);
+        full_response += piece;
+
+        // Call back to Kotlin
+        jstring jpiece = env->NewStringUTF(piece.c_str());
+        env->CallObjectMethod(callback, invoke_method, jpiece);
+        env->DeleteLocalRef(jpiece);
 
         batch.token[0] = next;
         batch.pos[0] = (llama_pos)(tokens.size() + i);
@@ -128,13 +141,7 @@ Java_com_example_geminiapi_llama_LlamaEngine_doCompletion(JNIEnv *env, jobject t
         if (llama_decode(ctx, batch) != 0) break;
     }
 
-    auto t_end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = t_end - t_start;
-    LOGD("Inference done: %d tokens in %.2fs (%.2f t/s)", count, duration.count(), count / duration.count());
-
     llama_batch_free(batch);
-    env->ReleaseStringUTFChars(prompt, prompt_str);
-
-    if (result_text.empty()) return env->NewStringUTF("AI returned empty result.");
-    return env->NewStringUTF(result_text.c_str());
+    env->ReleaseStringUTFChars(prompt, user_prompt);
+    return env->NewStringUTF(full_response.c_str());
 }

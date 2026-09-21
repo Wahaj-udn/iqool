@@ -23,9 +23,9 @@ class LlamaEngine {
         return loadModel(modelPath)
     }
 
-    fun completion(prompt: String): String {
+    fun completion(prompt: String, onToken: (String) -> Unit): String {
         if (!isLibraryLoaded) return "Error: Native library not loaded"
-        return doCompletion(prompt)
+        return doCompletion(prompt, onToken)
     }
 
     fun unload() {
@@ -36,5 +36,5 @@ class LlamaEngine {
 
     private external fun loadModel(modelPath: String): Boolean
     private external fun unloadModel()
-    private external fun doCompletion(prompt: String): String
+    private external fun doCompletion(prompt: String, callback: (String) -> Unit): String
 }

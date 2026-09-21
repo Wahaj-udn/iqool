@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">geminiapi</string>
+    <string name="app_name">HealthApp</string>
     <string name="action_go">Go</string>
     <string name="baking_title">Chat with Gemini</string>
     <string name="label_prompt">Enter your question</string>

@@ -106,6 +106,8 @@ class MainActivity : ComponentActivity() {
                             composable("onboarding") {
                                 OnboardingScreen(onComplete = {
                                     prefManager.isOnboardingCompleted = true
+                                    // Save the profile entered during onboarding
+                                    prefManager.saveFullProfile(HealthFeatureStore.profile.value)
                                     navController.navigate("home") {
                                         popUpTo("onboarding") { inclusive = true }
                                     }

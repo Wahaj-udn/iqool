@@ -4,7 +4,6 @@ import com.example.geminiapi.analysis.ModelResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.math.pow
 
 object HealthFeatureStore {
     private val _profile = MutableStateFlow(UnifiedHealthProfile())
@@ -20,7 +19,7 @@ object HealthFeatureStore {
     fun update(update: (UnifiedHealthProfile) -> UnifiedHealthProfile) {
         val newProfile = update(_profile.value)
         val heightM = newProfile.height / 100f
-        val calculatedBmi = if (heightM > 0) newProfile.weight / heightM.pow(2) else 24.2f
+        val calculatedBmi = if (heightM > 0) newProfile.weight / (heightM * heightM) else 24.2f
         _profile.value = newProfile.copy(bmi = calculatedBmi)
     }
 

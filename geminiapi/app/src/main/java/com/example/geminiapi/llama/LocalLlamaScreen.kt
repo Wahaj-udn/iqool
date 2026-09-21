@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.geminiapi.ui.components.*
+import com.example.geminiapi.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +35,7 @@ fun LocalLlamaScreen(
     var prompt by remember { mutableStateOf("") }
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scrollState = rememberScrollState()
 
     // Check for "All Files Access" permission
     var hasFullStorageAccess by remember {
@@ -78,7 +81,7 @@ fun LocalLlamaScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             if (!hasFullStorageAccess) {
@@ -131,7 +134,10 @@ fun LocalLlamaScreen(
                 )
 
                 Button(
-                    onClick = { viewModel.sendPrompt(prompt) },
+                    onClick = { 
+                        viewModel.sendPrompt(prompt)
+                        prompt = ""
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !uiState.isGenerating && prompt.isNotBlank()
                 ) {
@@ -147,13 +153,18 @@ fun LocalLlamaScreen(
                 }
 
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Local Response:", style = MaterialTheme.typography.labelMedium)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(if (uiState.isGenerating) "Processing locally on your device..." else uiState.response)
+                        Text(uiState.response)
+                        
+                        // Auto-scroll when new text arrives
+                        LaunchedEffect(uiState.response) {
+                            scrollState.animateScrollTo(scrollState.maxValue)
+                        }
                     }
                 }
             }

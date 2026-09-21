@@ -54,9 +54,14 @@ class LocalLlamaViewModel : ViewModel() {
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = engine.completion(prompt)
+                engine.completion(prompt) { token ->
+                    // Update UI for every token received (Streaming)
+                    _uiState.value = _uiState.value.copy(
+                        response = _uiState.value.response + token
+                    )
+                }
                 withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(response = result, isGenerating = false)
+                    _uiState.value = _uiState.value.copy(isGenerating = false)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

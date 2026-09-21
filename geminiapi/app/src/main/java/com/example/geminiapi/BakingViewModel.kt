@@ -21,7 +21,7 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
     val uiState: StateFlow<UiState> =
         _uiState.asStateFlow()
 
-    private val apiKey = "AQ.Ab8RN6Ld_6i_JZDi1AAYW5B6dRUv6aKA5jJhKVU3DGg4_edZVw"
+    private val apiKey = "AQ.Ab8RN6LOFR_SxdV7lcC392Ko7LQtYHh5PGa5dtjbj9RF8MV8VA"
 
     private val generativeModel = try {
         GenerativeModel(
