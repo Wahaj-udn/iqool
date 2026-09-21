@@ -1,10 +1,12 @@
 package com.example.geminiapi.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.geminiapi.ui.theme.Charcoal
@@ -107,6 +111,7 @@ fun ScreenHeader(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
+    titleImageRes: Int? = null,
     trailing: (@Composable () -> Unit)? = null
 ) {
     Row(
@@ -114,7 +119,18 @@ fun ScreenHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.headlineMedium)
+            if (titleImageRes != null) {
+                Image(
+                    painter = painterResource(id = titleImageRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(54.dp) // Professional font height (Increased by 50%)
+                        .wrapContentWidth(), // Preserve original aspect ratio
+                    alignment = Alignment.CenterStart
+                )
+            } else {
+                Text(text = title, style = MaterialTheme.typography.headlineMedium)
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
@@ -277,7 +293,8 @@ fun AppButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     style: AppButtonStyle = AppButtonStyle.Primary,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    enabled: Boolean = true
 ) {
     val shape = RoundedCornerShape(16.dp)
     val buttonModifier = modifier.heightIn(min = 52.dp)
@@ -293,6 +310,7 @@ fun AppButton(
         AppButtonStyle.Primary -> Button(
             onClick = onClick,
             modifier = buttonModifier,
+            enabled = enabled,
             shape = shape,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -303,6 +321,7 @@ fun AppButton(
         AppButtonStyle.Dark -> Button(
             onClick = onClick,
             modifier = buttonModifier,
+            enabled = enabled,
             shape = shape,
             colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Color.White),
             content = label
@@ -310,6 +329,7 @@ fun AppButton(
         AppButtonStyle.Lime -> Button(
             onClick = onClick,
             modifier = buttonModifier,
+            enabled = enabled,
             shape = shape,
             colors = ButtonDefaults.buttonColors(containerColor = Lime, contentColor = Charcoal),
             content = label
@@ -319,11 +339,80 @@ fun AppButton(
             OutlinedButton(
                 onClick = onClick,
                 modifier = buttonModifier,
+                enabled = enabled,
                 shape = shape,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor),
                 border = BorderStroke(1.5.dp, contentColor.copy(alpha = 0.25f)),
                 content = label
             )
+        }
+    }
+}
+
+@Composable
+fun AssessmentTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    suffix: String? = null,
+    placeholder: String? = null,
+    isDecimal: Boolean = false
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        suffix = suffix?.let { { Text(it) } },
+        modifier = modifier.fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = if (isDecimal) KeyboardType.Decimal else KeyboardType.Number
+        ),
+        shape = RoundedCornerShape(16.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Lime,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            focusedLabelColor = Lime,
+            cursorColor = Lime
+        ),
+        textStyle = MaterialTheme.typography.bodyLarge
+    )
+}
+
+@Composable
+fun AssessmentChoice(
+    label: String,
+    current: String,
+    options: List<String>,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = label, style = MaterialTheme.typography.labelMedium, color = mutedContent())
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            options.forEach { option ->
+                val selected = option.lowercase() == current.lowercase()
+                Surface(
+                    onClick = { onSelect(option) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (selected) Lime else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (selected) Charcoal else MaterialTheme.colorScheme.onSurfaceVariant,
+                    border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Box(modifier = Modifier.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = option.uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -340,7 +429,13 @@ fun AssessmentDropdown(label: String, current: String, options: List<String>, on
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth(),
-            textStyle = MaterialTheme.typography.bodyMedium
+            textStyle = MaterialTheme.typography.bodyMedium,
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Lime,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedLabelColor = Lime
+            )
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
@@ -361,16 +456,21 @@ fun AssessmentSlider(label: String, value: Float, range: ClosedFloatingPointRang
             value = value,
             onValueChange = onValueChange,
             valueRange = range,
-            steps = if (step >= 1f) (range.endInclusive - range.start).toInt() - 1 else 0
+            steps = if (step >= 1f) (range.endInclusive - range.start).toInt() - 1 else 0,
+            colors = SliderDefaults.colors(
+                thumbColor = Lime,
+                activeTrackColor = Lime,
+                inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
+            )
         )
     }
 }
 
 @Composable
 fun AssessmentSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = Lime, fontWeight = FontWeight.ExtraBold)
             content()
         }
     }

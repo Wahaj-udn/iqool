@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.geminiapi.R
 import com.example.geminiapi.ui.components.*
 import com.example.geminiapi.ui.theme.*
 import java.util.Locale
@@ -45,7 +46,8 @@ fun HomeScreen(
         // GREETING
         item {
             ScreenHeader(
-                title = "Good morning 👋",
+                title = "",
+                titleImageRes = R.drawable.header_home,
                 subtitle = "Here's how you're doing today.",
                 trailing = { Avatar() }
             )

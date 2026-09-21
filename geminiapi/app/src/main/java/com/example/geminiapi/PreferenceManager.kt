@@ -10,6 +10,7 @@ class PreferenceManager(context: Context) {
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
         
         // Unified Profile keys
+        private const val K_NAME = "name"
         private const val K_AGE = "age"
         private const val K_GENDER = "gender"
         private const val K_HEIGHT = "height"
@@ -28,6 +29,7 @@ class PreferenceManager(context: Context) {
 
     fun saveFullProfile(p: UnifiedHealthProfile) {
         prefs.edit().apply {
+            putString(K_NAME, p.name)
             putFloat(K_AGE, p.age)
             putString(K_GENDER, p.gender)
             putFloat(K_HEIGHT, p.height)
@@ -43,8 +45,8 @@ class PreferenceManager(context: Context) {
 
     fun getProfile(): UnifiedHealthProfile {
         return UnifiedHealthProfile(
+            name = prefs.getString(K_NAME, "Health User") ?: "Health User",
             age = prefs.getFloat(K_AGE, 30f),
-            gender = prefs.getString(K_GENDER, "male") ?: "male",
             height = prefs.getFloat(K_HEIGHT, 170f),
             weight = prefs.getFloat(K_WEIGHT, 70f),
             systolic = prefs.getFloat(K_SYSTOLIC, 120f),

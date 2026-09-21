@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         // Initialize store from persistent preferences
         HealthFeatureStore.init(prefManager.getProfile())
         
-        val startDest = if (prefManager.isOnboardingCompleted) "home" else "onboarding"
+        val startDest = if (prefManager.isOnboardingCompleted) "home" else "welcome"
         
         Log.d("MainActivity", "onCreate started. Onboarding: ${prefManager.isOnboardingCompleted}")
         
@@ -103,6 +103,13 @@ class MainActivity : ComponentActivity() {
                         color = MaterialTheme.colorScheme.background,
                     ) {
                         NavHost(navController = navController, startDestination = startDest) {
+                            composable("welcome") {
+                                WelcomeScreen(onContinue = {
+                                    navController.navigate("onboarding") {
+                                        popUpTo("welcome") { inclusive = true }
+                                    }
+                                })
+                            }
                             composable("onboarding") {
                                 OnboardingScreen(onComplete = {
                                     prefManager.isOnboardingCompleted = true

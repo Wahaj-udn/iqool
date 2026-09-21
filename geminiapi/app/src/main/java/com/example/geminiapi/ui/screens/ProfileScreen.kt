@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.geminiapi.HealthFeatureStore
+import com.example.geminiapi.R
 import com.example.geminiapi.ui.components.*
 import com.example.geminiapi.ui.theme.*
 
@@ -32,11 +33,12 @@ fun ProfileScreen(
     ) {
         item {
             ScreenHeader(
-                title = "Profile",
+                title = "",
+                titleImageRes = R.drawable.header_profile,
                 subtitle = "Your personal health information"
             )
         }
-        item { PersonalInformationCard(profile.age, profile.gender, onNavigateToEdit) }
+        item { PersonalInformationCard(profile.name, profile.age, profile.gender, onNavigateToEdit) }
         item { HealthDataCard(profile.height, profile.weight, profile.smoking, profile.alcohol, onNavigateToEdit) }
         item { HealthConnectCard(onNavigateToHealthConnect) }
         item { PrivacyCard() }
@@ -54,14 +56,14 @@ fun ProfileScreen(
 }
 
 @Composable
-fun PersonalInformationCard(age: Float, gender: String, onEdit: () -> Unit) {
+fun PersonalInformationCard(name: String, age: Float, gender: String, onEdit: () -> Unit) {
     HeroCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Avatar(diameter = 64.dp)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = "Personal information", style = MaterialTheme.typography.labelLarge, color = Lime)
-                Text(text = "Health User", style = MaterialTheme.typography.titleLarge)
+                Text(text = name, style = MaterialTheme.typography.titleLarge)
             }
             IconButton(onClick = onEdit) {
                 Icon(AppIcons.Edit, contentDescription = "Edit", tint = Lime)

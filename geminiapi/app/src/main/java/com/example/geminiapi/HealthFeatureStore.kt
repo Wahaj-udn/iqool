@@ -37,6 +37,7 @@ data class AssessmentResults(
 )
 
 data class UnifiedHealthProfile(
+    val name: String = "Health User",
     val age: Float = 30f,
     val gender: String = "male",
     val height: Float = 170f,

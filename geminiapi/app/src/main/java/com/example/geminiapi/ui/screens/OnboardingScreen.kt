@@ -16,19 +16,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.health.connect.client.PermissionController
 import com.example.geminiapi.HealthDataManager
 import com.example.geminiapi.HealthFeatureStore
 import com.example.geminiapi.PreferenceManager
 import com.example.geminiapi.ui.components.*
 import com.example.geminiapi.ui.theme.*
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +40,14 @@ fun OnboardingScreen(
     val scrollState = rememberScrollState()
     var step by remember { mutableIntStateOf(1) }
 
+    // Local string state for precise inputs
+    var ageStr by remember { mutableStateOf(profile.age.toInt().toString()) }
+    var heightStr by remember { mutableStateOf(profile.height.toInt().toString()) }
+    var weightStr by remember { mutableStateOf(profile.weight.toInt().toString()) }
+    var systolicStr by remember { mutableStateOf(profile.systolic.toInt().toString()) }
+    var diastolicStr by remember { mutableStateOf(profile.diastolic.toInt().toString()) }
+    var glucoseStr by remember { mutableStateOf(profile.glucose.toInt().toString()) }
+
     // Permission Launchers
     val healthLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract()
@@ -54,7 +59,7 @@ fun OnboardingScreen(
 
     Scaffold { padding ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(scrollState)
@@ -96,10 +101,24 @@ fun OnboardingScreen(
 
             if (step == 1) {
                 AssessmentSection("BASIC INFORMATION") {
-                    AssessmentSlider("Age", profile.age, 1f..120f) { HealthFeatureStore.update { p -> p.copy(age = it) } }
-                    AssessmentDropdown("Gender", profile.gender, listOf("male", "female")) { HealthFeatureStore.update { p -> p.copy(gender = it) } }
-                    AssessmentSlider("Height (cm)", profile.height, 50f..250f) { HealthFeatureStore.update { p -> p.copy(height = it) } }
-                    AssessmentSlider("Weight (kg)", profile.weight, 20f..300f) { HealthFeatureStore.update { p -> p.copy(weight = it) } }
+                    AssessmentTextField("Age", ageStr, onValueChange = { 
+                        ageStr = it
+                        it.toFloatOrNull()?.let { v -> HealthFeatureStore.update { p -> p.copy(age = v) } }
+                    }, suffix = "years")
+                    
+                    AssessmentChoice("Gender", profile.gender, listOf("male", "female"), onSelect = {
+                        HealthFeatureStore.update { p -> p.copy(gender = it) }
+                    })
+
+                    AssessmentTextField("Height", heightStr, onValueChange = { 
+                        heightStr = it
+                        it.toFloatOrNull()?.let { v -> HealthFeatureStore.update { p -> p.copy(height = v) } }
+                    }, suffix = "cm")
+
+                    AssessmentTextField("Weight", weightStr, onValueChange = { 
+                        weightStr = it
+                        it.toFloatOrNull()?.let { v -> HealthFeatureStore.update { p -> p.copy(weight = v) } }
+                    }, suffix = "kg")
                 }
                 
                 AppButton(
@@ -109,10 +128,33 @@ fun OnboardingScreen(
                 )
             } else if (step == 2) {
                 AssessmentSection("LIFESTYLE & VITALS") {
-                    AssessmentDropdown("Smoking Status", profile.smoking, listOf("never", "former", "current")) { HealthFeatureStore.update { p -> p.copy(smoking = it) } }
-                    AssessmentDropdown("Physical Activity", profile.activity, listOf("low", "moderate", "high", "veryHigh")) { HealthFeatureStore.update { p -> p.copy(activity = it) } }
-                    AssessmentSlider("Systolic BP", profile.systolic, 60f..250f) { HealthFeatureStore.update { p -> p.copy(systolic = it) } }
-                    AssessmentSlider("Glucose (mg/dL)", profile.glucose, 30f..500f) { HealthFeatureStore.update { p -> p.copy(glucose = it) } }
+                    AssessmentChoice("Smoking Status", profile.smoking, listOf("never", "former", "current"), onSelect = {
+                        HealthFeatureStore.update { p -> p.copy(smoking = it) }
+                    })
+                    
+                    AssessmentDropdown("Physical Activity", profile.activity, listOf("low", "moderate", "high", "veryHigh"), onSelect = {
+                        HealthFeatureStore.update { p -> p.copy(activity = it) }
+                    })
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            AssessmentTextField("Systolic BP", systolicStr, onValueChange = { 
+                                systolicStr = it
+                                it.toFloatOrNull()?.let { v -> HealthFeatureStore.update { p -> p.copy(systolic = v) } }
+                            })
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            AssessmentTextField("Diastolic BP", diastolicStr, onValueChange = { 
+                                diastolicStr = it
+                                it.toFloatOrNull()?.let { v -> HealthFeatureStore.update { p -> p.copy(diastolic = v) } }
+                            })
+                        }
+                    }
+
+                    AssessmentTextField("Glucose", glucoseStr, onValueChange = { 
+                        glucoseStr = it
+                        it.toFloatOrNull()?.let { v -> HealthFeatureStore.update { p -> p.copy(glucose = v) } }
+                    }, suffix = "mg/dL")
                 }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

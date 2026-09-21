@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.geminiapi.AssessmentResults
 import com.example.geminiapi.HealthFeatureStore
+import com.example.geminiapi.R
 import com.example.geminiapi.ui.components.*
 import com.example.geminiapi.ui.theme.*
 import kotlin.math.roundToInt
@@ -39,7 +40,8 @@ fun HealthScreen(
     ) {
         item {
             ScreenHeader(
-                title = "Health",
+                title = "",
+                titleImageRes = R.drawable.header_health,
                 subtitle = "Understand your health"
             )
         }

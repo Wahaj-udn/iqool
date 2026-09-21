@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.geminiapi.R
 import com.example.geminiapi.ui.components.*
 import com.example.geminiapi.ui.theme.*
 
@@ -34,7 +35,8 @@ fun WorkoutScreen(
         // HEADER
         item {
             ScreenHeader(
-                title = "Workout",
+                title = "",
+                titleImageRes = R.drawable.header_workout,
                 subtitle = "Move, train and improve at your own pace."
             )
         }
