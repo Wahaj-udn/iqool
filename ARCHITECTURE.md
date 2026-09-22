@@ -1,8 +1,5 @@
 # HealthSync — Architecture Deep Dive
 
-<img width="1366" height="768" alt="HealthSync Architecture" src="https://github.com/user-attachments/assets/adc01d28-addf-4839-889a-9a1ec0f67038" />
-
-
 
 
 ## Table of Contents
