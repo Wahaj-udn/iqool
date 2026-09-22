@@ -2,6 +2,11 @@
 
 > A comprehensive Android health & fitness app combining on-device ML inference, real-time pose detection, GPS run tracking, and LLM-based coaching — all privacy-first with local processing.
 
+
+
+<img width="1920" height="1080" alt="HealthSync Architecture" src="https://github.com/user-attachments/assets/cd4fbef4-bf93-461c-b89d-c1f85567e176" />
+
+
 ---
 
 ## Table of Contents
