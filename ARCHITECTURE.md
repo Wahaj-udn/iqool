@@ -1,5 +1,10 @@
 # HealthSync — Architecture Deep Dive
 
+<img width="1366" height="768" alt="HealthSync Architecture" src="https://github.com/user-attachments/assets/adc01d28-addf-4839-889a-9a1ec0f67038" />
+
+
+
+
 ## Table of Contents
 
 - [High-Level Overview](#high-level-overview)
@@ -226,28 +231,6 @@ Torso vertical distance check (isHorizontal guard)
                          UP_ANGLE  > 155° → pushupReps++, inDownState=false
         │
         ▼ HeuristicResult {repCount, progress, isDown}
-```
-
-### Gemini AI Coach Flow
-
-```
-User sends first message
-        │
-        ▼ BakingViewModel.sendPrompt
-isFirstMessage = chat.history.isEmpty()
-        │
-        ├── if true:
-        │     healthConnectSummary = HealthDataManager.fetchLast15DaysSummary()
-        │     profile  = HealthFeatureStore.profile.value
-        │     results  = HealthFeatureStore.lastResults.value
-        │     finalPrompt = [context block] + userMessage
-        │
-        └── if false:
-              finalPrompt = userMessage  (context already in chat history)
-                │
-                ▼ chat.sendMessage(userContent)  [Dispatchers.IO]
-                │
-                ▼ chat.history updated → _chatHistory.value = history
 ```
 
 ---
