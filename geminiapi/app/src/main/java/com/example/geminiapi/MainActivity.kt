@@ -125,6 +125,7 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToWorkout = { navController.navigate("workout") },
                                     onNavigateToHealth = { navController.navigate("health_dashboard") },
                                     onNavigateToAI = { navController.navigate("ai_coach") },
+                                    onNavigateToNutritionOcr = { navController.navigate("nutrition_ocr") },
                                     modifier = Modifier.padding(innerPadding)
                                 )
                             }
@@ -195,6 +196,9 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("local_chat") {
                                 LocalLlamaScreen(onBack = { navController.popBackStack() })
+                            }
+                            composable("nutrition_ocr") {
+                                NutritionOcrScreen(onBack = { navController.popBackStack() })
                             }
                         }
                     }

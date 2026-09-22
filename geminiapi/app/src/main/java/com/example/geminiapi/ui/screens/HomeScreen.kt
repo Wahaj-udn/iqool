@@ -31,6 +31,7 @@ fun HomeScreen(
     onNavigateToWorkout: () -> Unit = {},
     onNavigateToHealth: () -> Unit = {},
     onNavigateToAI: () -> Unit = {},
+    onNavigateToNutritionOcr: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -91,7 +92,7 @@ fun HomeScreen(
         // AI INSIGHT
         item {
             ScreenSection(title = "AI insight") {
-                AIInsightCard(onNavigateToAI)
+                AIInsightCard(onNavigateToAI, onNavigateToNutritionOcr)
             }
         }
 
@@ -342,7 +343,7 @@ fun HealthStatusCard(onNavigate: () -> Unit) {
 }
 
 @Composable
-fun AIInsightCard(onNavigate: () -> Unit) {
+fun AIInsightCard(onNavigate: () -> Unit, onNavigateToNutritionOcr: () -> Unit) {
     LimeCard {
         IconChip(icon = AppIcons.Sparkle, background = Charcoal, tint = Lime, size = 44.dp, shape = CircleShape)
         Spacer(modifier = Modifier.height(14.dp))
@@ -350,7 +351,17 @@ fun AIInsightCard(onNavigate: () -> Unit) {
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = "A short recovery walk could help you stay active today.", style = MaterialTheme.typography.bodyMedium, color = Charcoal.copy(alpha = 0.75f) )
         Spacer(modifier = Modifier.height(16.dp))
-        AppButton(text = "Ask Health AI", onClick = onNavigate, style = AppButtonStyle.Dark, icon = AppIcons.Sparkle)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                AppButton(text = "Ask Health AI", onClick = onNavigate, style = AppButtonStyle.Dark, icon = AppIcons.Sparkle, modifier = Modifier.fillMaxWidth())
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                AppButton(text = "Scan Nutrition", onClick = onNavigateToNutritionOcr, style = AppButtonStyle.Dark, icon = AppIcons.Camera, modifier = Modifier.fillMaxWidth())
+            }
+        }
     }
 }
 
@@ -359,7 +370,7 @@ fun AIInsightCard(onNavigate: () -> Unit) {
 fun HomeScreenPreview() {
     GeminiapiTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            HomeScreen()
+            HomeScreen(onNavigateToNutritionOcr = {})
         }
     }
 }

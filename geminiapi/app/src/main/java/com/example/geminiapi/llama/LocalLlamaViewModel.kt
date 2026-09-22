@@ -14,12 +14,13 @@ data class LlamaUiState(
     val isLoaded: Boolean = false,
     val isLoading: Boolean = false,
     val isGenerating: Boolean = false,
+    val isThinkingEnabled: Boolean = false,
     val response: String = "",
     val error: String? = null
 )
 
 class LocalLlamaViewModel : ViewModel() {
-    private val engine = LlamaEngine()
+    private val engine = LlamaEngine.shared
     
     private val _uiState = MutableStateFlow(LlamaUiState())
     val uiState: StateFlow<LlamaUiState> = _uiState.asStateFlow()
@@ -47,14 +48,19 @@ class LocalLlamaViewModel : ViewModel() {
         }
     }
 
+    fun setThinkingEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isThinkingEnabled = enabled)
+    }
+
     fun sendPrompt(prompt: String) {
         if (!_uiState.value.isLoaded || _uiState.value.isGenerating) return
         
+        val thinkingEnabled = _uiState.value.isThinkingEnabled
         _uiState.value = _uiState.value.copy(isGenerating = true, response = "", error = null)
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                engine.completion(prompt) { token ->
+                engine.completion(prompt, thinkingEnabled) { token ->
                     // Update UI for every token received (Streaming)
                     _uiState.value = _uiState.value.copy(
                         response = _uiState.value.response + token
@@ -73,6 +79,6 @@ class LocalLlamaViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        engine.unload()
+        // Do not automatically unload to allow cross-screen persistence in Phase 2
     }
 }

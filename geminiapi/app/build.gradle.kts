@@ -94,6 +94,9 @@ dependencies {
     // ONNX Runtime
     implementation(libs.onnxruntime.android)
 
+    // Google ML Kit Text Recognition Bundled On-Device model
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+
     implementation("androidx.health.connect:connect-client:1.1.0")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
