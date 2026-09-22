@@ -331,13 +331,3 @@ Key library versions (see `gradle/libs.versions.toml` for full list):
 | ML Kit Text Recognition | 16.0.1 |
 
 ---
-
-## Known Limitations
-
-- **llama.cpp path is hardcoded** to `D:/Wahaj/AI/llama.cpp` in CMakeLists.txt — must be updated per machine before building.
-- **Hypertension model (221 MB)** has a noticeable cold-start delay on first inference; subsequent runs reuse the loaded session.
-- **MapLibre offline tiles** require a one-time download (Hyderabad region only by default). Change `LatLngBounds` in `RunScreen.kt` for other regions.
-- **Local Qwen3 requires All Files Access** — a broad permission granted only at user request. The model path is hardcoded to `/storage/emulated/0/Download/`.
-- **Resting HR and sleep data** on the Home screen fall back to hardcoded values (75 bpm, 8h 22m) when Health Connect has no data for the selected day.
-- The app targets emulator environments by skipping MapLibre init when `Build.PRODUCT` contains "sdk".
-- Gemini API key is embedded in source — use `local.properties` or Android secrets plugin for production.
